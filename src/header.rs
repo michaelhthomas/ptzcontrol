@@ -2,17 +2,20 @@ use gtk::prelude::*;
 use relm4::adw::prelude::*;
 use relm4::prelude::*;
 
+use crate::camera::CameraStatus;
 use crate::config::AppConfig;
 
 pub struct Header {
     cameras: Vec<(u64, String)>,
     dropdown: Option<gtk::DropDown>,
+    status_dot: Option<gtk::DrawingArea>,
     selected_notify_handler: Option<gtk::glib::SignalHandlerId>,
 }
 
 #[derive(Debug)]
 pub enum HeaderInput {
     UpdateCameras(AppConfig),
+    SetStatus(CameraStatus),
 }
 
 #[derive(Debug)]
@@ -28,15 +31,22 @@ impl SimpleComponent for Header {
 
     view! {
         adw::HeaderBar {
+            #[name = "status_dot"]
+            pack_start = &gtk::DrawingArea {
+                set_size_request: (10, 10),
+                set_valign: gtk::Align::Center,
+                set_vexpand: false,
+                set_halign: gtk::Align::Center,
+                set_css_classes: &["status-dot", "status-disconnected"],
+            },
+
             #[name = "camera_dropdown"]
             pack_start = &gtk::DropDown {
                 set_halign: gtk::Align::Start,
             },
 
             #[wrap(Some)]
-            set_title_widget = &adw::WindowTitle {
-                set_title: "PTZ Controller"
-            },
+            set_title_widget = &adw::WindowTitle {},
 
             #[name = "menu_button"]
             pack_end = &gtk::MenuButton {
@@ -60,11 +70,13 @@ impl SimpleComponent for Header {
         let mut model = Header {
             cameras,
             dropdown: None,
+            status_dot: None,
             selected_notify_handler: None,
         };
         let widgets = view_output!();
 
         model.dropdown = Some(widgets.camera_dropdown.clone());
+        model.status_dot = Some(widgets.status_dot.clone());
         
         // Connect the signal and store the handler ID
         let handler = widgets.camera_dropdown.connect_selected_notify({
@@ -128,6 +140,22 @@ impl SimpleComponent for Header {
                     .collect();
                 if let Some(ref dropdown) = self.dropdown {
                     update_dropdown(dropdown, self, config.selected_camera_id);
+                }
+            }
+            HeaderInput::SetStatus(status) => {
+                let (text, css_class) = match status {
+                    CameraStatus::Connecting => ("Connecting…", "status-connecting"),
+                    CameraStatus::Connected => ("Connected", "status-connected"),
+                    CameraStatus::Reconnecting => ("Reconnecting…", "status-reconnecting"),
+                    CameraStatus::Disconnected => ("Disconnected", "status-disconnected"),
+                };
+                if let Some(ref dot) = self.status_dot {
+                    dot.set_tooltip_text(Some(text));
+                    dot.remove_css_class("status-connecting");
+                    dot.remove_css_class("status-connected");
+                    dot.remove_css_class("status-reconnecting");
+                    dot.remove_css_class("status-disconnected");
+                    dot.add_css_class(css_class);
                 }
             }
         }

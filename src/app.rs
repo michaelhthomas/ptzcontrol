@@ -2,7 +2,7 @@ use gtk::prelude::*;
 use relm4::adw::prelude::*;
 use relm4::prelude::*;
 
-use crate::camera::{CameraAction, CameraConnection, CameraService};
+use crate::camera::{CameraAction, CameraConnection, CameraService, CameraStatus};
 use crate::camera_preferences::{CameraPreferences, CameraPreferencesOutput};
 use crate::config::AppConfig;
 use crate::d_pad::DPad;
@@ -31,6 +31,7 @@ pub enum AppMsg {
     OpenSettings { add_new: bool },
     ConfigChanged(AppConfig),
     ReconnectCamera,
+    CameraStatus(CameraStatus),
 }
 
 #[relm4::component(pub)]
@@ -65,7 +66,12 @@ impl SimpleComponent for App {
     ) -> ComponentParts<Self> {
         let config = AppConfig::load();
 
-        let camera_service = CameraService::start();
+        let status_sender = sender.input_sender().clone();
+        let status_cb: std::sync::Arc<dyn Fn(CameraStatus) + Send + Sync> =
+            std::sync::Arc::new(move |status| {
+                let _ = status_sender.emit(AppMsg::CameraStatus(status));
+            });
+        let camera_service = CameraService::start(status_cb);
 
         let header = Header::builder()
             .launch(config.clone())
@@ -172,6 +178,9 @@ impl SimpleComponent for App {
                         self.camera_service.reconnect(conn);
                     }
                 }
+            }
+            AppMsg::CameraStatus(status) => {
+                self.header.emit(crate::header::HeaderInput::SetStatus(status));
             }
         }
     }
