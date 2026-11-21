@@ -1,3 +1,4 @@
+use grafton_visca::types::PanTiltDirection;
 use gtk::prelude::*;
 use relm4::prelude::*;
 
@@ -95,14 +96,14 @@ impl SimpleComponent for DPad {
         widgets.down_right_btn.set_css_classes(&["rotate-180"]);
 
         let directions = [
-            (&widgets.up_left_btn, grafton_visca::command::PanTiltDirection::UpLeft),
-            (&widgets.up_btn, grafton_visca::command::PanTiltDirection::Up),
-            (&widgets.up_right_btn, grafton_visca::command::PanTiltDirection::UpRight),
-            (&widgets.left_btn, grafton_visca::command::PanTiltDirection::Left),
-            (&widgets.right_btn, grafton_visca::command::PanTiltDirection::Right),
-            (&widgets.down_left_btn, grafton_visca::command::PanTiltDirection::DownLeft),
-            (&widgets.down_btn, grafton_visca::command::PanTiltDirection::Down),
-            (&widgets.down_right_btn, grafton_visca::command::PanTiltDirection::DownRight),
+            (&widgets.up_left_btn, PanTiltDirection::UpLeft),
+            (&widgets.up_btn, PanTiltDirection::Up),
+            (&widgets.up_right_btn, PanTiltDirection::UpRight),
+            (&widgets.left_btn, PanTiltDirection::Left),
+            (&widgets.right_btn, PanTiltDirection::Right),
+            (&widgets.down_left_btn, PanTiltDirection::DownLeft),
+            (&widgets.down_btn, PanTiltDirection::Down),
+            (&widgets.down_right_btn, PanTiltDirection::DownRight),
         ];
 
         for (button, direction) in directions {
